@@ -1,5 +1,10 @@
 #include "ConPty.h"
 
+#include "glfw3.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <cassert>
 #include <codecvt>
 #include <iostream>
@@ -29,9 +34,67 @@ int main()
     Sleep(1000);
 
     std::string strBuffer = pPty->ReadAll();
+    if (!glfwInit())
+    {
+        return 1;
+    }
 
-    // std::cout << strBuffer << std::endl;
-    std::cout << UTF8ToGBK(strBuffer) << std::endl;
+    const char* glsl_version = "#version 130";
+
+    // Create window with graphics context
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3", nullptr, nullptr);
+    if (window == nullptr)
+    {
+        return 1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1); // Enable vsync
+
+    // Setup Dear ImGui context
+    ImGui::CreateContext();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // Main loop
+    while (!glfwWindowShouldClose(window))
+    {
+        glfwPollEvents();
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // ************ GUI **************
+        bool bOpen = true;
+        ImGui::Begin("hello world", &bOpen, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
+        ImGui::Text(strBuffer.c_str());
+        ImGui::End();
+        // ************ GUI **************
+
+        ImGui::Render();
+        int nDisplayWidth = 0;
+        int nDisplayHeight = 0;
+        glfwGetFramebufferSize(window, &nDisplayWidth, &nDisplayHeight);
+        glViewport(0, 0, nDisplayWidth, nDisplayHeight);
+
+        const ImVec4 CLEAR_COLOR = ImVec4(0, 0, 0, 1);
+        glClearColor(CLEAR_COLOR.x * CLEAR_COLOR.w, CLEAR_COLOR.y * CLEAR_COLOR.w, CLEAR_COLOR.z * CLEAR_COLOR.w,
+                     CLEAR_COLOR.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);
+    }
+
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     pPty->Destroy();
 }

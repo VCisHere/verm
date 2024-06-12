@@ -1,0 +1,21 @@
+set(VERM_FOLDER
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/pty
+)
+
+foreach(folder ${VERM_FOLDER})
+    file(GLOB srcs ${folder}/*.cpp)
+    list(APPEND VERM_SRC ${srcs})
+endforeach()
+
+add_executable(verm ${VERM_SRC})
+
+target_include_directories(verm PUBLIC
+	${THIRD_PARTY_INCLUDE_DIR}
+
+	${VERM_FOLDER}
+)
+
+target_link_libraries(verm PUBLIC
+	
+)

@@ -1,5 +1,7 @@
 set(VERM_FOLDER
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/display
+	${CMAKE_CURRENT_SOURCE_DIR}/font
 	${CMAKE_CURRENT_SOURCE_DIR}/pty
 )
 
@@ -17,7 +19,7 @@ target_include_directories(verm PUBLIC
 )
 
 target_link_libraries(verm PUBLIC
-	imgui glfw opengl32
+	imgui glfw opengl32 freetype glad
 )
 
 if(MSVC)

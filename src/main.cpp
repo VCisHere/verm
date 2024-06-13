@@ -2,10 +2,6 @@
 #include "FontLoader.h"
 #include "Shader.h"
 
-#include "ft2build.h"
-#include FT_FREETYPE_H
-// #include FT_GLYPH_H
-
 #include "glad/glad.h"
 
 #include "glfw3.h"
@@ -47,8 +43,6 @@ struct Character
     GLuint Advance;     // 原点距下一个字形原点的距离
 };
 
-std::map<GLchar, Character> Characters;
-
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 600;
 GLuint VAO, VBO;
@@ -80,8 +74,6 @@ void RenderText(CShader& Shader, std::wstring text, GLfloat x, GLfloat y, GLfloa
 
         Character ch = {dwTextureID, glm::ivec2(Glyph.dwWidth, Glyph.dwHeight), glm::ivec2(Glyph.dwLeft, Glyph.dwTop),
                         static_cast<unsigned int>(Glyph.dwAdvanceX)};
-
-        // Character ch = Characters[*c];
 
         GLfloat xpos = x + ch.Bearing.x * scale;
         GLfloat ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
@@ -134,7 +126,7 @@ void TestRenderText()
         return;
     }
 
-    FontLoader.Create("simsun.ttc");
+    FontLoader.Create("./res/font/simsun.ttc");
 
     // disable byte-alignment restriction
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -145,7 +137,7 @@ void TestRenderText()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // compile and setup the shader
-    CShader Shader("text.vs", "text.fs");
+    CShader Shader("./res/shader/text.vs", "./res/shader/text.fs");
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
     Shader.Use();
     glUniformMatrix4fv(glGetUniformLocation(Shader.GetID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));

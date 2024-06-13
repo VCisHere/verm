@@ -27,3 +27,7 @@ set_target_properties(verm PROPERTIES
     LINK_FLAGS "${LINK_FLAGS} /ENTRY:mainCRTStartup /SUBSYSTEM:WINDOWS"
 )
 endif()
+
+add_custom_command(TARGET verm POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/res ${CMAKE_CURRENT_BINARY_DIR}/res
+)

@@ -29,6 +29,7 @@ private:
     static void FramebufferSizeCallback(GLFWwindow* pWindow, int nWidth, int nHeight);
     static void WindowCloseCallback(GLFWwindow* pWindow);
 
+    void FramebufferSizeCallback(int nWidth, int nHeight);
     void WindowCloseCallback();
 
     void RenderThread();

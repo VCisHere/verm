@@ -112,9 +112,6 @@ void CTerminalWindow::RenderThread()
         return;
     }
 
-    // disable byte-alignment restriction
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
     // OpenGL state
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
@@ -155,7 +152,7 @@ void CTerminalWindow::RenderThread()
 
             if (dwX + dwChWidth < 80)
             {
-                ++dwX;
+                dwX += dwChWidth;
             }
             else
             {

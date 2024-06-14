@@ -9,14 +9,6 @@
 #include "gtc/matrix_transform.hpp"
 #include "gtc/type_ptr.hpp"
 
-struct Character
-{
-    GLuint TextureID;   // 字形纹理的ID
-    glm::ivec2 Size;    // 字形大小
-    glm::ivec2 Bearing; // 从基准线到字形左部/顶部的偏移值
-    GLuint Advance;     // 原点距下一个字形原点的距离
-};
-
 CTextRenderer::CTextRenderer() : m_pShader(nullptr), m_pTextureManager(nullptr), m_VAO(0), m_VBO(0)
 {
 }
@@ -65,8 +57,9 @@ bool CTextRenderer::Render(uint32_t dwColumn, uint32_t dwRow, char32_t code, glm
         return false;
     }
 
-    float x = dwColumn * 9;
-    float y = dwRow * (9 * 2 + 1);
+    float width = 9;
+    float x = dwColumn * width;
+    float y = dwRow * (width * 2 + 1);
     float scale = 1.0f;
     glUniform3f(glGetUniformLocation(m_pShader->GetID(), "textColor"), color.x, color.y, color.z);
     glActiveTexture(GL_TEXTURE0);

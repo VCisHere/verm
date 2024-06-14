@@ -7,6 +7,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 class CFontLoader
 {
@@ -18,20 +19,19 @@ public:
         uint32_t dwHeight;
         uint32_t dwLeft;
         uint32_t dwTop;
-        uint32_t dwAdvanceX;
     } GLYPH;
 
     CFontLoader();
     ~CFontLoader();
 
-    bool Create(const std::string& strFile);
+    bool Create(const std::vector<std::string>& strFileVec);
     void Destroy();
 
     bool GetData(char32_t ch, GLYPH& Glyph);
 
 private:
     FT_Library m_pFTLib;
-    FT_Face m_pFTFace;
+    std::vector<FT_Face> m_pFTFaceVec;
 
     std::unordered_map<char32_t, GLYPH> m_GlyphMap;
 };

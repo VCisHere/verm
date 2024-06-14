@@ -18,7 +18,8 @@ CTextureManager::~CTextureManager()
 bool CTextureManager::Create()
 {
     m_pFontLoader = new CFontLoader();
-    if (!m_pFontLoader->Create("./res/font/CascadiaMono.ttf"))
+    // todo: config
+    if (!m_pFontLoader->Create({"./res/font/CascadiaMono.ttf", "./res/font/simsun.ttc"}))
     {
         delete m_pFontLoader;
         m_pFontLoader = nullptr;
@@ -50,6 +51,9 @@ bool CTextureManager::GetTextTexture(char32_t code, CHARACTOR& Charactor)
         return false;
     }
 
+    // disable byte-alignment restriction
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
     uint32_t dwTextureID = 0;
     glGenTextures(1, &dwTextureID);
     glBindTexture(GL_TEXTURE_2D, dwTextureID);
@@ -63,7 +67,6 @@ bool CTextureManager::GetTextTexture(char32_t code, CHARACTOR& Charactor)
     Charactor.dwTextureID = dwTextureID;
     Charactor.Size = glm::ivec2(Glyph.dwWidth, Glyph.dwHeight);
     Charactor.Bearing = glm::ivec2(Glyph.dwLeft, Glyph.dwTop);
-    Charactor.dwAdvance = Glyph.dwAdvanceX;
 
     m_CharactorMap.insert(std::make_pair(code, Charactor));
 

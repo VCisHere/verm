@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-CFontLoader::CFontLoader() : m_pFTLib(NULL), m_pFTFace(NULL)
+CFontLoader::CFontLoader() : m_pFTLib(nullptr)
 {
 }
 
@@ -10,7 +10,7 @@ CFontLoader::~CFontLoader()
 {
 }
 
-bool CFontLoader::Create(const std::string& strFile)
+bool CFontLoader::Create(const std::vector<std::string>& strFileVec)
 {
     if (FT_Init_FreeType(&m_pFTLib))
     {
@@ -18,24 +18,35 @@ bool CFontLoader::Create(const std::string& strFile)
         return false;
     }
 
-    if (FT_New_Face(m_pFTLib, strFile.c_str(), 0, &m_pFTFace))
+    m_pFTFaceVec.reserve(strFileVec.size());
+    for (size_t i = 0; i < strFileVec.size(); ++i)
     {
-        std::cout << "Fail to load font" << std::endl;
-        return false;
+        FT_Face pFace = nullptr;
+        if (FT_New_Face(m_pFTLib, strFileVec[i].c_str(), 0, &pFace))
+        {
+            std::cout << "Fail to load font" << std::endl;
+            return false;
+        }
+
+        // todo: dpi
+        FT_Set_Char_Size(pFace, 0, 12 * 64, 96, 0);
+
+        // todo: select charmap
+        FT_Select_Charmap(pFace, FT_ENCODING_UNICODE);
+
+        m_pFTFaceVec.push_back(pFace);
     }
-
-    // todo: dpi
-    FT_Set_Char_Size(m_pFTFace, 0, 12 * 64, 96, 0);
-
-    // todo: select charmap
-    FT_Select_Charmap(m_pFTFace, FT_ENCODING_UNICODE);
 
     return true;
 }
 
 void CFontLoader::Destroy()
 {
-    FT_Done_Face(m_pFTFace);
+    for (size_t i = 0; i < m_pFTFaceVec.size(); ++i)
+    {
+        FT_Done_Face(m_pFTFaceVec[i]);
+    }
+
     FT_Done_FreeType(m_pFTLib);
 }
 
@@ -48,25 +59,47 @@ bool CFontLoader::GetData(char32_t ch, GLYPH& Glyph)
         return true;
     }
 
-    uint32_t id = FT_Get_Char_Index(m_pFTFace, ch);
-    if (id == 0)
+    FT_Face pFace = nullptr;
+    for (std::vector<FT_Face>::iterator Iter = m_pFTFaceVec.begin(); Iter != m_pFTFaceVec.end(); ++Iter)
+    {
+        uint32_t id = FT_Get_Char_Index(*Iter, ch);
+        if (id > 0)
+        {
+            pFace = *Iter;
+            break;
+        }
+    }
+
+    if (pFace == nullptr)
     {
         return false;
     }
 
-    if (FT_Load_Char(m_pFTFace, ch, FT_LOAD_DEFAULT | FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT | FT_OUTLINE_HIGH_PRECISION))
+    int32_t nFlags =
+        FT_LOAD_DEFAULT | FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT | FT_OUTLINE_HIGH_PRECISION | FT_LOAD_NO_BITMAP;
+    // int32_t nFlags =
+    //     FT_LOAD_DEFAULT | FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT | FT_OUTLINE_HIGH_PRECISION | FT_LOAD_MONOCHROME;
+    if (FT_Load_Char(pFace, ch, nFlags))
     {
         std::cout << "Failed to load Glyph" << std::endl;
         return false;
     }
 
-    Glyph.dwWidth = m_pFTFace->glyph->bitmap.width;
-    Glyph.dwHeight = m_pFTFace->glyph->bitmap.rows;
-    Glyph.dwLeft = m_pFTFace->glyph->bitmap_left;
-    Glyph.dwTop = m_pFTFace->glyph->bitmap_top;
-    Glyph.dwAdvanceX = m_pFTFace->glyph->advance.x;
+    Glyph.dwWidth = pFace->glyph->bitmap.width;
+    Glyph.dwHeight = pFace->glyph->bitmap.rows;
+    Glyph.dwLeft = pFace->glyph->bitmap_left;
+    Glyph.dwTop = pFace->glyph->bitmap_top;
     Glyph.pData = new char[Glyph.dwWidth * Glyph.dwHeight];
-    memcpy(Glyph.pData, m_pFTFace->glyph->bitmap.buffer, static_cast<size_t>(Glyph.dwWidth) * Glyph.dwHeight);
+    // size_t i = 0;
+    // for (size_t y = 0; y < Glyph.dwHeight; ++y)
+    //{
+    //     for (size_t x = 0; x < Glyph.dwWidth; ++x)
+    //     {
+    //         Glyph.pData[i] =
+    //             ((pFace->glyph->bitmap.buffer[y * pFace->glyph->bitmap.pitch + x / 8] << (x % 8)) & 0x80) ? 0xFF : 0;
+    //     }
+    // }
+    memcpy(Glyph.pData, pFace->glyph->bitmap.buffer, static_cast<size_t>(Glyph.dwWidth) * Glyph.dwHeight);
 
     m_GlyphMap.insert(std::make_pair(ch, Glyph));
 

@@ -24,7 +24,11 @@ bool CFontLoader::Create(const std::string& strFile)
         return false;
     }
 
-    FT_Set_Pixel_Sizes(m_pFTFace, 0, 48);
+    // todo: dpi
+    FT_Set_Char_Size(m_pFTFace, 0, 12 * 64, 96, 0);
+
+    // todo: select charmap
+    FT_Select_Charmap(m_pFTFace, FT_ENCODING_UNICODE);
 
     return true;
 }
@@ -35,16 +39,22 @@ void CFontLoader::Destroy()
     FT_Done_FreeType(m_pFTLib);
 }
 
-bool CFontLoader::GetData(wchar_t ch, GLYPH& Glyph)
+bool CFontLoader::GetData(char32_t ch, GLYPH& Glyph)
 {
-    std::unordered_map<wchar_t, GLYPH>::iterator Iter = m_GlyphMap.find(ch);
+    std::unordered_map<char32_t, GLYPH>::iterator Iter = m_GlyphMap.find(ch);
     if (Iter != m_GlyphMap.end())
     {
         Glyph = Iter->second;
         return true;
     }
 
-    if (FT_Load_Char(m_pFTFace, ch, FT_LOAD_RENDER))
+    uint32_t id = FT_Get_Char_Index(m_pFTFace, ch);
+    if (id == 0)
+    {
+        return false;
+    }
+
+    if (FT_Load_Char(m_pFTFace, ch, FT_LOAD_DEFAULT | FT_LOAD_RENDER | FT_LOAD_NO_AUTOHINT | FT_OUTLINE_HIGH_PRECISION))
     {
         std::cout << "Failed to load Glyph" << std::endl;
         return false;
@@ -56,7 +66,7 @@ bool CFontLoader::GetData(wchar_t ch, GLYPH& Glyph)
     Glyph.dwTop = m_pFTFace->glyph->bitmap_top;
     Glyph.dwAdvanceX = m_pFTFace->glyph->advance.x;
     Glyph.pData = new char[Glyph.dwWidth * Glyph.dwHeight];
-    memcpy(Glyph.pData, m_pFTFace->glyph->bitmap.buffer, Glyph.dwWidth * Glyph.dwHeight);
+    memcpy(Glyph.pData, m_pFTFace->glyph->bitmap.buffer, static_cast<size_t>(Glyph.dwWidth) * Glyph.dwHeight);
 
     m_GlyphMap.insert(std::make_pair(ch, Glyph));
 

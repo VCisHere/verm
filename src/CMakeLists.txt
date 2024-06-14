@@ -2,6 +2,7 @@ set(VERM_FOLDER
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/display
 	${CMAKE_CURRENT_SOURCE_DIR}/font
+	${CMAKE_CURRENT_SOURCE_DIR}/misc
 	${CMAKE_CURRENT_SOURCE_DIR}/pty
 )
 
@@ -24,7 +25,7 @@ target_link_libraries(verm PUBLIC
 
 if(MSVC)
 set_target_properties(verm PROPERTIES 
-    LINK_FLAGS "${LINK_FLAGS} /ENTRY:mainCRTStartup /SUBSYSTEM:WINDOWS"
+    LINK_FLAGS "${LINK_FLAGS}"# /ENTRY:mainCRTStartup /SUBSYSTEM:WINDOWS"
 )
 endif()
 

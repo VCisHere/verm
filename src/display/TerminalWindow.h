@@ -1,12 +1,14 @@
 #ifndef _TERMINAL_WINDOW_H_
 #define _TERMINAL_WINDOW_H_
 
+#include "TerminalSession.h"
+
 #include <set>
 #include <thread>
 
 class GLFWwindow;
 
-class CTerminalWindow
+class CTerminalWindow : public CTerminalSession::CTerminalListener
 {
 public:
     class CWindowListener
@@ -29,6 +31,8 @@ private:
     static void FramebufferSizeCallback(GLFWwindow* pWindow, int nWidth, int nHeight);
     static void WindowCloseCallback(GLFWwindow* pWindow);
 
+    virtual void OnScreenUpdate();
+
     void FramebufferSizeCallback(int nWidth, int nHeight);
     void WindowCloseCallback();
 
@@ -42,6 +46,8 @@ private:
     std::thread m_renderThread;
 
     std::set<CWindowListener*> m_pListenerSet;
+
+    CTerminalSession* m_pSession;
 };
 
 #endif // _TERMINAL_WINDOW_H_

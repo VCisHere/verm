@@ -1,5 +1,7 @@
 #include "TerminalWindow.h"
 #include "TextRenderer.h"
+#include "UTF8Reader.h"
+#include "WCUtils.h"
 
 #include "glad/glad.h"
 
@@ -10,7 +12,7 @@
 
 #include <iostream>
 
-CTerminalWindow::CTerminalWindow() : m_pWindow(nullptr), m_dwWidth(0), m_dwHeight(0)
+CTerminalWindow::CTerminalWindow() : m_pWindow(nullptr), m_dwWidth(0), m_dwHeight(0), m_pSession(nullptr)
 {
 }
 
@@ -69,6 +71,10 @@ void CTerminalWindow::WindowCloseCallback(GLFWwindow* pWindow)
     pThis->WindowCloseCallback();
 }
 
+void CTerminalWindow::OnScreenUpdate()
+{
+}
+
 void CTerminalWindow::FramebufferSizeCallback(int nWidth, int nHeight)
 {
     m_dwWidth = nWidth;
@@ -118,6 +124,11 @@ void CTerminalWindow::RenderThread()
     CTextRenderer TextRenderer;
     TextRenderer.Create();
 
+    CTerminalSession TerminalSession;
+    TerminalSession.Create(80, 25);
+
+    TerminalSession.Write("echo hello\r");
+
     while (!glfwWindowShouldClose(m_pWindow))
     {
         // input
@@ -128,10 +139,36 @@ void CTerminalWindow::RenderThread()
 
         TextRenderer.SetWindowSize(m_dwWidth, m_dwHeight);
 
-        TextRenderer.RenderText(L"Test text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-        TextRenderer.RenderText(L"≤‚ ‘Œƒ±æ", 0.0f, 0.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+        std::string strScreenBuffer = TerminalSession.GetScreenBuffer();
+
+        uint32_t dwX = 0;
+        uint32_t dwY = 1;
+        std::u32string u32str = CWCUtils::UTF8ToUnicode(strScreenBuffer);
+        for (size_t i = 0; i < u32str.size(); ++i)
+        {
+            char32_t code = u32str[i];
+            uint32_t dwChWidth = CWCUtils::GetWideCharWidth(u32str[i]);
+            bool bRender = TextRenderer.Render(dwX, dwY, u32str[i], glm::vec3(1, 1, 1));
+            if (!bRender)
+            {
+                continue;
+            }
+
+            if (dwX + dwChWidth < 80)
+            {
+                ++dwX;
+            }
+            else
+            {
+                dwX = 0;
+                ++dwY;
+            }
+        }
 
         glfwSwapBuffers(m_pWindow);
         glfwPollEvents();
     }
+
+    TerminalSession.Destroy();
+    TextRenderer.Destroy();
 }

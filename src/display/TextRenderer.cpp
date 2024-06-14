@@ -1,6 +1,7 @@
 #include "TextRenderer.h"
 #include "FontLoader.h"
 #include "Shader.h"
+#include "TextureManager.h"
 
 #include "glad/glad.h"
 
@@ -16,7 +17,7 @@ struct Character
     GLuint Advance;     // 原点距下一个字形原点的距离
 };
 
-CTextRenderer::CTextRenderer() : m_pShader(nullptr), m_pFontLoader(nullptr), m_VAO(0), m_VBO(0)
+CTextRenderer::CTextRenderer() : m_pShader(nullptr), m_pTextureManager(nullptr), m_VAO(0), m_VBO(0)
 {
 }
 
@@ -39,8 +40,8 @@ bool CTextRenderer::Create()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    m_pFontLoader = new CFontLoader();
-    m_pFontLoader->Create("./res/font/simsun.ttc");
+    m_pTextureManager = new CTextureManager();
+    m_pTextureManager->Create();
 
     return true;
 }
@@ -56,52 +57,37 @@ void CTextRenderer::SetWindowSize(uint32_t dwWidth, uint32_t dwHeight)
     glUniformMatrix4fv(glGetUniformLocation(m_pShader->GetID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void CTextRenderer::RenderText(const std::wstring& str, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color)
+bool CTextRenderer::Render(uint32_t dwColumn, uint32_t dwRow, char32_t code, glm::vec3 color)
 {
-    m_pShader->Use();
+    CTextureManager::CHARACTOR Charactor;
+    if (!m_pTextureManager->GetTextTexture(code, Charactor))
+    {
+        return false;
+    }
+
+    float x = dwColumn * 9;
+    float y = dwRow * (9 * 2 + 1);
+    float scale = 1.0f;
     glUniform3f(glGetUniformLocation(m_pShader->GetID(), "textColor"), color.x, color.y, color.z);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(m_VAO);
 
-    std::wstring::const_iterator c;
-    for (c = str.begin(); c != str.end(); c++)
-    {
-        CFontLoader::GLYPH Glyph;
-        m_pFontLoader->GetData(*c, Glyph);
+    GLfloat xpos = x + Charactor.Bearing.x * scale;
+    GLfloat ypos = y - (Charactor.Size.y - Charactor.Bearing.y) * scale;
 
-        uint32_t dwTextureID;
-        glGenTextures(1, &dwTextureID);
-        glBindTexture(GL_TEXTURE_2D, dwTextureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, Glyph.dwWidth, Glyph.dwHeight, 0, GL_RED, GL_UNSIGNED_BYTE, Glyph.pData);
+    GLfloat w = Charactor.Size.x * scale;
+    GLfloat h = Charactor.Size.y * scale;
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLfloat vertices[6][4] = {{xpos, ypos + h, 0.0, 0.0}, {xpos, ypos, 0.0, 1.0},     {xpos + w, ypos, 1.0, 1.0},
+                              {xpos, ypos + h, 0.0, 0.0}, {xpos + w, ypos, 1.0, 1.0}, {xpos + w, ypos + h, 1.0, 0.0}};
 
-        Character ch = {dwTextureID, glm::ivec2(Glyph.dwWidth, Glyph.dwHeight), glm::ivec2(Glyph.dwLeft, Glyph.dwTop),
-                        static_cast<unsigned int>(Glyph.dwAdvanceX)};
+    glBindTexture(GL_TEXTURE_2D, Charactor.dwTextureID);
 
-        GLfloat xpos = x + ch.Bearing.x * scale;
-        GLfloat ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        GLfloat w = ch.Size.x * scale;
-        GLfloat h = ch.Size.y * scale;
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        GLfloat vertices[6][4] = {{xpos, ypos + h, 0.0, 0.0}, {xpos, ypos, 0.0, 1.0},
-                                  {xpos + w, ypos, 1.0, 1.0}, {xpos, ypos + h, 0.0, 0.0},
-                                  {xpos + w, ypos, 1.0, 1.0}, {xpos + w, ypos + h, 1.0, 0.0}};
-
-        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-
-        glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        x += (ch.Advance >> 6) * scale; // 2 << 6 = 64
-    }
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    return true;
 }

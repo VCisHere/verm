@@ -27,13 +27,13 @@ public:
     bool Create(const std::string& strFile);
     void Destroy();
 
-    bool GetData(wchar_t ch, GLYPH& Glyph);
+    bool GetData(char32_t ch, GLYPH& Glyph);
 
 private:
     FT_Library m_pFTLib;
     FT_Face m_pFTFace;
 
-    std::unordered_map<wchar_t, GLYPH> m_GlyphMap;
+    std::unordered_map<char32_t, GLYPH> m_GlyphMap;
 };
 
 #endif // _FONT_LOADER_H_

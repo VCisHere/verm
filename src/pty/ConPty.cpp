@@ -2,8 +2,9 @@
 
 #include <codecvt>
 
-CConPty::CConPty()
-    : m_hInPipe(INVALID_HANDLE_VALUE),
+CConPty::CConPty(CPtyListener* pListener)
+    : CPty(pListener),
+      m_hInPipe(INVALID_HANDLE_VALUE),
       m_hOutPipe(INVALID_HANDLE_VALUE),
       m_hPty(INVALID_HANDLE_VALUE),
       m_pPI(NULL),
@@ -169,8 +170,11 @@ void CConPty::ReadThread()
 
         if (dwReadBytes > 0)
         {
-            std::lock_guard<std::mutex> lock(m_mu);
-            m_strBuffer.append(szBuffer, dwReadBytes);
+            {
+                std::lock_guard<std::mutex> lock(m_mu);
+                m_strBuffer.append(szBuffer, dwReadBytes);
+            }
+            m_pListener->OnPtyData();
         }
     }
 }

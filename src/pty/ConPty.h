@@ -11,7 +11,7 @@
 class CConPty : public CPty
 {
 public:
-    CConPty();
+    CConPty(CPtyListener* pListener);
     virtual ~CConPty();
 
     virtual bool Create(const std::string& strCmd, const std::string& strArgs, const std::string& strWorkDir,

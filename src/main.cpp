@@ -18,7 +18,7 @@ std::string UTF8ToGBK(const std::string& str)
 class CTerminalApp : public CTerminalWindow::CWindowListener
 {
 public:
-    virtual void OnDestroy()
+    virtual void OnWindowDestroy()
     {
         m_cond.notify_one();
     }

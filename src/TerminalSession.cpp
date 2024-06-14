@@ -12,7 +12,7 @@ CTerminalSession::~CTerminalSession()
 
 bool CTerminalSession::Create(uint32_t dwCols, uint32_t dwRows)
 {
-    m_pPty = new CConPty();
+    m_pPty = std::make_unique<CConPty>(this);
     m_pPty->Create("C:\\windows\\system32\\cmd.exe", "", "", "", dwCols, dwRows);
 
     m_bAlive = true;
@@ -25,6 +25,7 @@ bool CTerminalSession::Create(uint32_t dwCols, uint32_t dwRows)
 void CTerminalSession::Destroy()
 {
     m_bAlive = false;
+    m_cond.notify_one();
 
     m_readThread.join();
 
@@ -46,11 +47,18 @@ void CTerminalSession::Write(const std::string& str)
     m_pPty->Write(str);
 }
 
+void CTerminalSession::OnPtyData()
+{
+    m_cond.notify_one();
+}
+
 void CTerminalSession::ReadThread()
 {
     while (m_bAlive)
     {
+        std::unique_lock<std::mutex> lock(m_mu);
+        m_cond.wait(lock);
+
         m_strScreenBuffer += m_pPty->ReadAll();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }

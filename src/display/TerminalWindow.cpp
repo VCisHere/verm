@@ -1,6 +1,5 @@
 #include "TerminalWindow.h"
 #include "TextRenderer.h"
-#include "UTF8Reader.h"
 #include "WCUtils.h"
 
 #include "glad/glad.h"
@@ -88,7 +87,7 @@ void CTerminalWindow::WindowCloseCallback()
     for (std::set<CWindowListener*>::iterator Iter = m_pListenerSet.begin(); Iter != m_pListenerSet.end(); ++Iter)
     {
         CWindowListener* pListener = *Iter;
-        pListener->OnDestroy();
+        pListener->OnWindowDestroy();
     }
 }
 

@@ -6,7 +6,14 @@
 class CPty
 {
 public:
-    CPty();
+    class CPtyListener
+    {
+    public:
+        virtual void OnPtyData() = 0;
+    };
+
+public:
+    CPty(CPtyListener* pListener);
     virtual ~CPty();
 
     virtual bool Create(const std::string& strCmd, const std::string& strArgs, const std::string& strWorkDir,
@@ -19,6 +26,8 @@ public:
     virtual int64_t Write(const std::string& strData) = 0;
 
 protected:
+    CPtyListener* m_pListener;
+
     int16_t m_sRows;
     int16_t m_sCols;
 };

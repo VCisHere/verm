@@ -14,7 +14,7 @@ public:
     class CWindowListener
     {
     public:
-        virtual void OnDestroy() = 0;
+        virtual void OnWindowDestroy() = 0;
     };
 
 public:

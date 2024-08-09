@@ -21,7 +21,7 @@ target_include_directories(verm PUBLIC
 )
 
 target_link_libraries(verm PUBLIC
-	imgui glfw opengl32 freetype glad
+	imgui glfw opengl32 freetype glad SDL2-static
 )
 
 if(MSVC)

@@ -14,43 +14,49 @@ CUTF8Reader::~CUTF8Reader()
 
 bool CUTF8Reader::GetNext(char32_t& code)
 {
-    if (m_cur == m_str.size())
+    if (m_cur >= m_str.size())
     {
         return false;
     }
 
     assert((m_str[m_cur] & 0xF8) <= 0xF0);
-    int next = 1;
-    unsigned char c = m_str[m_cur];
-    if ((c & 0x80) == 0x00)
+
+    if ((m_str[m_cur] & 0x80) == 0x00)
     {
-        code = c;
+        code = uint8_t(m_str[m_cur]);
+        m_cur += 1;
     }
-    else if ((c & 0xE0) == 0xC0)
+    else if ((m_str[m_cur] & 0xE0) == 0xC0)
     {
-        code = char32_t(c) << 8;
-        unsigned char b = m_str[m_cur + 1];
-        code |= char32_t(b);
-        next = 2;
+        code = uint8_t(m_str[m_cur]);
+        code <<= 8;
+        code |= uint8_t(m_str[m_cur + 1]);
+        m_cur += 2;
     }
     else if ((m_str[m_cur] & 0xF0) == 0xE0)
     {
-        uint64_t a = uint8_t(m_str[m_cur]);
-        char32_t b = char32_t(m_str[m_cur + 1]) << 8;
         code = uint8_t(m_str[m_cur]);
-        code = (code << 8);
+        code <<= 8;
         code |= uint8_t(m_str[m_cur + 1]);
-        code = (code << 8) | uint8_t(m_str[m_cur + 2]);
-        // code = char32_t(m_str[m_cur]) << 16 | char32_t(m_str[m_cur + 1]) << 8 | m_str[m_cur + 2];
-        next = 3;
+        code <<= 8;
+        code |= uint8_t(m_str[m_cur + 2]);
+        m_cur += 3;
     }
     else if ((m_str[m_cur] & 0xF8) == 0xF0)
     {
-        code = char32_t(m_str[m_cur]) << 24 | char32_t(m_str[m_cur + 1]) << 16 | char32_t(m_str[m_cur + 2]) << 8 |
-               m_str[m_cur + 3];
-        next = 4;
+        code = uint8_t(m_str[m_cur]);
+        code <<= 8;
+        code |= uint8_t(m_str[m_cur + 1]);
+        code <<= 8;
+        code |= uint8_t(m_str[m_cur + 2]);
+        code <<= 8;
+        code |= uint8_t(m_str[m_cur + 3]);
+        m_cur += 4;
     }
-    m_cur += next;
+    else
+    {
+        return false;
+    }
 
     return true;
 }

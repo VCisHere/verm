@@ -1,4 +1,7 @@
+#define SDL_MAIN_HANDLED
+
 #include "ConPty.h"
+#include "SDL.h"
 #include "TerminalWindow.h"
 
 #include <codecvt>
@@ -43,8 +46,33 @@ private:
     std::condition_variable m_cond;
 };
 
-int main()
+int main(int argc, char* argv[])
 {
-    CTerminalApp App;
-    App.Run();
+    // CTerminalApp App;
+    // App.Run();
+
+    bool quit = false;
+    SDL_Event event;
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    SDL_Window* screen =
+        SDL_CreateWindow("My SDL Empty window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, 0);
+
+    while (!quit)
+    {
+        SDL_WaitEvent(&event);
+
+        switch (event.type)
+        {
+            case SDL_QUIT:
+            {
+                quit = true;
+                break;
+            }
+        }
+    }
+
+    SDL_Quit();
+    return 0;
 }

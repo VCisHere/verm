@@ -22,7 +22,12 @@ add_subdirectory(glm)
 
 add_subdirectory(glad)
 
+set(SDL_STATIC ON)
+set(SDL_SHARED ON)
 add_subdirectory(freetype-2.13.2)
+
+# set(SDL_STATIC ON)
+add_subdirectory(sdl-2.30.6)
 
 set(THIRD_PARTY_INCLUDE_DIR
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -42,6 +47,9 @@ set(THIRD_PARTY_INCLUDE_DIR
 
     # freetype
     ${CMAKE_CURRENT_SOURCE_DIR}/freetype-2.13.2/include
+
+    # sdl
+    ${CMAKE_CURRENT_SOURCE_DIR}/sdl-2.30.6/include
 
 	PARENT_SCOPE
 )
